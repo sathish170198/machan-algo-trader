@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080b10">
+<title>MACHAN ALGO TRADER</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080b10;color:#eee;font-family:Arial,sans-serif;padding:18px}
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;padding:15px 0}
+h1{font-size:21px;color:#edc56b}
+small{color:#999}
+.card{background:#131b26;border:1px solid #293443;border-radius:15px;padding:18px;margin:15px 0}
+.price{font-size:35px;color:#edc56b;margin:15px 0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#1a2431;padding:14px;border-radius:10px}
+.stat strong{display:block;font-size:19px;margin-top:10px}
+button{border:0;border-radius:9px;padding:13px;font-weight:bold;cursor:pointer}
+.buy{background:#16bd86;color:#001b13}
+.sell{background:#ee526a;color:white}
+.start{background:#e5b95b;color:#15100a;width:100%;margin-top:12px}
+.stop{background:#ee526a;color:white;width:100%;margin-top:12px}
+input{background:#080e16;color:white;border:1px solid #344253;padding:11px;width:100%;border-radius:8px;margin:7px 0}
+.trade-buttons{display:flex;gap:10px}
+.trade-buttons button{flex:1}
+#history p{border-bottom:1px solid #293443;padding:10px 0;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+<div><h1>MACHAN ALGO TRADER</h1><small>GOLD SCALPING TERMINAL</small></div>
+<div style="color:#39d6a0">● DEMO</div>
+</header>
+
+<div class="card">
+<small>XAUUSD · GOLD / USD</small>
+<div class="price" id="price">$2650.00</div>
+<small>SIMULATED MARKET PRICE</small>
+</div>
+
+<div class="stats">
+<div class="stat"><small>DEMO BALANCE</small><strong id="balance">$10,000</strong></div>
+<div class="stat"><small>TODAY P/L</small><strong id="pnl">$0.00</strong></div>
+<div class="stat"><small>OPEN TRADES</small><strong id="count">0</strong></div>
+<div class="stat"><small>ALGORITHM</small><strong id="status">STOPPED</strong></div>
+</div>
+
+<div class="card">
+<h3>Trading Settings</h3>
+<label>Lot Size</label>
+<input id="lot" type="number" value="0.01" min="0.01" step="0.01">
+<label>Stop Loss ($)</label>
+<input id="sl" type="number" value="3" min="0.5">
+<label>Take Profit ($)</label>
+<input id="tp" type="number" value="5" min="0.5">
+<button class="start" id="algo">START PAPER ALGO</button>
+</div>
+
+<div class="card">
+<h3>Manual Paper Trading</h3>
+<div class="trade-buttons">
+<button class="buy" onclick="trade('BUY')">BUY</button>
+<button class="sell" onclick="trade('SELL')">SELL</button>
+</div>
+</div>
+
+<div class="card">
+<h3>Trade History</h3>
+<div id="history"><small>No trades yet.</small></div>
+</div>
+
+<p style="text-align:center;color:#778;font-size:10px">
+MACHAN ALGO TRADER V1.0<br>
+SIMULATION ONLY · NO LIVE BROKER ORDERS
+</p>
+
+<script>
+let price=2650,balance=10000,pnl=0,running=false;
+let positions=[],history=[];
+const el=id=>document.getElementById(id);
+const money=n=>"$"+n.toFixed(2);
+
+function render(){
+el("price").textContent=money(price);
+el("balance").textContent=money(balance);
+el("pnl").textContent=money(pnl);
+el("count").textContent=positions.length;
+el("status").textContent=running?"RUNNING":"STOPPED";
+el("history").innerHTML=history.length?
+history.map(t=>`<p>${t.side} | ${money(t.entry)} → ${money(t.exit)} | ${money(t.result)}</p>`).join(""):"<small>No trades yet.</small>";
+}
+
+function trade(side){
+let lot=Number(el("lot").value);
+let sl=Number(el("sl").value);
+let tp=Number(el("tp").value);
+if(!Number.isFinite(lot)||lot<=0||!Number.isFinite(sl)||sl<=0||!Number.isFinite(tp)||tp<=0){alert("Enter valid settings");return}
+positions.push({side,entry:price,lot,sl,tp});
+render();
+alert(side+" paper trade opened");
+}
+
+function closeTrade(i){
+let p=positions[i];
+let diff=(price-p.entry)*(p.side==="BUY"?1:-1);
+let result=diff*p.lot*10;
+balance+=result;pnl+=result;
+history.unshift({side:p.side,entry:p.entry,exit:price,result});
+positions.splice(i,1);render();
+}
+
+el("algo").onclick=()=>{
+running=!running;
+el("algo").textContent=running?"STOP PAPER ALGO":"START PAPER ALGO";
+el("algo").className=running?"stop":"start";
+render();
+};
+
+setInterval(()=>{
+price+=(Math.random()-.49)*1.2;
+if(running && positions.length===0){
+let direction=Math.random();
+if(direction>.97)trade("BUY");
+else if(direction<.03)trade("SELL");
+}
+positions.forEach((p,i)=>{
+let diff=(price-p.entry)*(p.side==="BUY"?1:-1);
+if(diff<=-p.sl||diff>=p.tp)closeTrade(i);
+});
+render();
+},2000);
+
+render();
+</script>
+</body>
+</html>
